@@ -18,6 +18,9 @@ function loadTheme() {
         document.documentElement.classList.add('dark');
         themeIcon.textContent = '☀️';
         themeBtn.innerHTML = `<span id="theme-icon">☀️</span> Light Mode`;
+    } else {
+        themeIcon.textContent = '🌙';
+        themeBtn.innerHTML = `<span id="theme-icon">🌙</span> Dark Mode`;
     }
 }
 
@@ -44,7 +47,7 @@ async function fetchCountries() {
         renderCountries(allCountries);
     } catch (error) {
         console.error('Error al cargar países:', error);
-        grid.innerHTML = `<p style="color:red; grid-column:1/-1; text-align:center;">Error al cargar los datos. Inténtalo más tarde.</p>`;
+        grid.innerHTML = `<p style="color:red; grid-column:1/-1; text-align:center; padding:40px;">Error al cargar los datos. Inténtalo más tarde.</p>`;
     }
 }
 
@@ -73,17 +76,15 @@ function renderCountries(countries) {
     });
 }
 
-// Mostrar detalle
+// Mostrar detalle (el resto del código es idéntico al original)
 function showDetail(country) {
     currentDetail = country;
     grid.style.display = 'none';
     detailView.style.display = 'block';
     
-    // Obtener nombres de idiomas y monedas
     const languages = Object.values(country.languages || {}).join(', ');
     const currencies = Object.values(country.currencies || {}).map(c => c.name).join(', ');
     
-    // Bordes
     let bordersHTML = '<p><strong>Border Countries:</strong> ';
     if (country.borders && country.borders.length > 0) {
         bordersHTML += country.borders.map(code => {
@@ -114,20 +115,17 @@ function showDetail(country) {
     `;
 }
 
-// Mostrar país de frontera
 window.showBorder = function(cca3) {
     const country = allCountries.find(c => c.cca3 === cca3);
     if (country) showDetail(country);
 };
 
-// Botón volver
 backBtn.addEventListener('click', () => {
     detailView.style.display = 'none';
     grid.style.display = 'grid';
-    renderCountries(allCountries); // vuelve a mostrar la lista filtrada actual
+    renderCountries(allCountries);
 });
 
-// Filtros
 function filterCountries() {
     const searchTerm = searchInput.value.toLowerCase().trim();
     const selectedRegion = regionFilter.value;
@@ -135,9 +133,7 @@ function filterCountries() {
     let filtered = allCountries;
     
     if (searchTerm) {
-        filtered = filtered.filter(c => 
-            c.name.common.toLowerCase().includes(searchTerm)
-        );
+        filtered = filtered.filter(c => c.name.common.toLowerCase().includes(searchTerm));
     }
     
     if (selectedRegion) {
