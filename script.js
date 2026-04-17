@@ -2,44 +2,6 @@
 let allCountries = [];
 let currentDetail = null;
 
-// Traducción de regiones al español
-const regionesES = {
-    'Africa': 'África',
-    'Americas': 'América',
-    'Asia': 'Asia',
-    'Europe': 'Europa',
-    'Oceania': 'Oceanía',
-    'Antarctic': 'Antártida',
-    'Polar': 'Polar'
-};
-
-// Traducción de subregiones al español
-const subregionesES = {
-    'Southern Asia': 'Asia del Sur',
-    'Northern Europe': 'Europa del Norte',
-    'Southern Europe': 'Europa del Sur',
-    'Northern Africa': 'África del Norte',
-    'Western Africa': 'África Occidental',
-    'Eastern Africa': 'África Oriental',
-    'Middle Africa': 'África Central',
-    'Southern Africa': 'África del Sur',
-    'South America': 'América del Sur',
-    'North America': 'América del Norte',
-    'Central America': 'América Central',
-    'Caribbean': 'Caribe',
-    'Eastern Asia': 'Asia Oriental',
-    'South-Eastern Asia': 'Asia del Sureste',
-    'Western Asia': 'Asia Occidental',
-    'Central Asia': 'Asia Central',
-    'Eastern Europe': 'Europa del Este',
-    'Western Europe': 'Europa Occidental',
-    'Southern Asia': 'Asia del Sur',
-    'Melanesia': 'Melanesia',
-    'Micronesia': 'Micronesia',
-    'Polynesia': 'Polinesia',
-    'Australia and New Zealand': 'Australia y Nueva Zelanda'
-};
-
 // Elementos DOM
 const grid = document.getElementById('countries-grid');
 const searchInput = document.getElementById('search-input');
@@ -48,14 +10,6 @@ const detailView = document.getElementById('detail-view');
 const detailContent = document.getElementById('detail-content');
 const backBtn = document.getElementById('back-btn');
 const themeBtn = document.getElementById('theme-toggle');
-const themeIcon = document.getElementById('theme-icon');
-
-// Obtener nombre en español del país
-function getNombreES(country) {
-    return (country.translations && country.translations.es) 
-        ? country.translations.es 
-        : country.name;
-}
 
 // Cargar tema guardado
 function loadTheme() {
@@ -72,15 +26,12 @@ themeBtn.addEventListener('click', () => {
     document.documentElement.classList.toggle('dark');
     const isDark = document.documentElement.classList.contains('dark');
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    
-    if (isDark) {
-        themeBtn.innerHTML = `<span id="theme-icon">☀️</span> Modo Claro`;
-    } else {
-        themeBtn.innerHTML = `<span id="theme-icon">🌙</span> Modo Oscuro`;
-    }
+    themeBtn.innerHTML = isDark
+        ? `<span id="theme-icon">☀️</span> Modo Claro`
+        : `<span id="theme-icon">🌙</span> Modo Oscuro`;
 });
 
-// Cargar datos desde data.json
+// Cargar datos desde data.json (ya en español)
 async function fetchCountries() {
     try {
         const res = await fetch('data.json');
@@ -99,20 +50,16 @@ function renderCountries(countries) {
         grid.innerHTML = `<p style="grid-column:1/-1; text-align:center; padding:40px;">No se encontraron países.</p>`;
         return;
     }
-    
     countries.forEach(country => {
-        const nombreES = getNombreES(country);
-        const regionES = regionesES[country.region] || country.region;
-
         const card = document.createElement('div');
         card.className = 'country-card';
         card.innerHTML = `
-            <img src="${country.flags.png}" alt="Bandera de ${nombreES}">
+            <img src="${country.flags.png}" alt="Bandera de ${country.name}">
             <div class="country-info">
-                <h3>${nombreES}</h3>
+                <h3>${country.name}</h3>
                 <p><strong>Población:</strong> ${country.population.toLocaleString('es-ES')}</p>
-                <p><strong>Región:</strong> ${regionES}</p>
-                <p><strong>Capital:</strong> ${country.capital || 'N/A'}</p>
+                <p><strong>Región:</strong> ${country.region}</p>
+                <p><strong>Capital:</strong> ${country.capital || 'N/D'}</p>
             </div>
         `;
         card.addEventListener('click', () => showDetail(country));
@@ -125,40 +72,34 @@ function showDetail(country) {
     currentDetail = country;
     grid.style.display = 'none';
     detailView.style.display = 'block';
-    
-    const nombreES = getNombreES(country);
-    const regionES = regionesES[country.region] || country.region;
-    const subregionES = subregionesES[country.subregion] || country.subregion || 'N/A';
 
     const idiomas = country.languages.map(l => l.name).join(', ');
     const monedas = country.currencies.map(c => c.name).join(', ');
-    
-    let borderHTML = '<div class="border-countries"><strong>Países Fronterizos:</strong> ';
+
+    let bordersHTML = '<div class="border-countries"><strong>Países Fronterizos:</strong> ';
     if (country.borders && country.borders.length > 0) {
-        borderHTML += country.borders.map(code => {
-            const borderCountry = allCountries.find(c => c.alpha3Code === code);
-            if (!borderCountry) return '';
-            const borderNombreES = getNombreES(borderCountry);
-            return `<button onclick="showBorder('${code}')">${borderNombreES}</button>`;
+        bordersHTML += country.borders.map(code => {
+            const vecino = allCountries.find(c => c.alpha3Code === code);
+            return vecino ? `<button onclick="showBorder('${code}')">${vecino.name}</button>` : '';
         }).filter(Boolean).join('');
     } else {
-        borderHTML += 'Ninguno';
+        bordersHTML += 'Ninguno';
     }
-    borderHTML += '</div>';
-    
+    bordersHTML += '</div>';
+
     detailContent.innerHTML = `
-        <img src="${country.flags.png}" alt="Bandera de ${nombreES}">
+        <img src="${country.flags.png}" alt="Bandera de ${country.name}">
         <div class="detail-info">
-            <h2>${nombreES}</h2>
-            <div class="detail-row"><strong>Nombre Nativo:</strong> ${country.nativeName || nombreES}</div>
+            <h2>${country.name}</h2>
+            <div class="detail-row"><strong>Nombre Nativo:</strong> ${country.nativeName || country.name}</div>
             <div class="detail-row"><strong>Población:</strong> ${country.population.toLocaleString('es-ES')}</div>
-            <div class="detail-row"><strong>Región:</strong> ${regionES}</div>
-            <div class="detail-row"><strong>Subregión:</strong> ${subregionES}</div>
-            <div class="detail-row"><strong>Capital:</strong> ${country.capital || 'N/A'}</div>
-            <div class="detail-row"><strong>Dominio de nivel superior:</strong> ${country.topLevelDomain ? country.topLevelDomain[0] : 'N/A'}</div>
+            <div class="detail-row"><strong>Región:</strong> ${country.region}</div>
+            <div class="detail-row"><strong>Subregión:</strong> ${country.subregion || 'N/D'}</div>
+            <div class="detail-row"><strong>Capital:</strong> ${country.capital || 'N/D'}</div>
+            <div class="detail-row"><strong>Dominio de nivel superior:</strong> ${country.topLevelDomain ? country.topLevelDomain[0] : 'N/D'}</div>
             <div class="detail-row"><strong>Monedas:</strong> ${monedas}</div>
             <div class="detail-row"><strong>Idiomas:</strong> ${idiomas}</div>
-            ${borderHTML}
+            ${bordersHTML}
         </div>
     `;
 }
@@ -177,20 +118,20 @@ backBtn.addEventListener('click', () => {
 function filterCountries() {
     const searchTerm = searchInput.value.toLowerCase().trim();
     const selectedRegion = regionFilter.value;
-    
+
+    const regionMap = {
+        'Africa': 'África', 'Americas': 'América',
+        'Asia': 'Asia', 'Europe': 'Europa', 'Oceania': 'Oceanía',
+    };
+
     let filtered = allCountries;
-    
     if (searchTerm) {
-        filtered = filtered.filter(c => {
-            const nombreES = getNombreES(c).toLowerCase();
-            return nombreES.includes(searchTerm) || c.name.toLowerCase().includes(searchTerm);
-        });
+        filtered = filtered.filter(c => c.name.toLowerCase().includes(searchTerm));
     }
-    
     if (selectedRegion) {
-        filtered = filtered.filter(c => c.region === selectedRegion);
+        const regionES = regionMap[selectedRegion] || selectedRegion;
+        filtered = filtered.filter(c => c.region === regionES);
     }
-    
     renderCountries(filtered);
 }
 
