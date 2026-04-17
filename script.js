@@ -12,7 +12,7 @@ const backBtn = document.getElementById('back-btn');
 const themeBtn = document.getElementById('theme-toggle');
 const themeIcon = document.getElementById('theme-icon');
 
-// Cargar tema guardado
+// Cargar tema
 function loadTheme() {
     if (localStorage.getItem('theme') === 'dark') {
         document.documentElement.classList.add('dark');
@@ -29,7 +29,6 @@ themeBtn.addEventListener('click', () => {
     document.documentElement.classList.toggle('dark');
     const isDark = document.documentElement.classList.contains('dark');
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    
     if (isDark) {
         themeIcon.textContent = '☀️';
         themeBtn.innerHTML = `<span id="theme-icon">☀️</span> Light Mode`;
@@ -39,26 +38,31 @@ themeBtn.addEventListener('click', () => {
     }
 });
 
-// Obtener datos de la API
+// Obtener datos de la API 
 async function fetchCountries() {
     try {
         const res = await fetch('https://restcountries.com/v3.1/all?fields=name,flags,population,region,capital,cca3,subregion,tld,currencies,languages,borders');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         allCountries = await res.json();
         renderCountries(allCountries);
     } catch (error) {
         console.error('Error al cargar países:', error);
-        grid.innerHTML = `<p style="color:red; grid-column:1/-1; text-align:center; padding:40px;">Error al cargar los datos. Inténtalo más tarde.</p>`;
+        grid.innerHTML = `
+            <p style="color:red; grid-column:1/-1; text-align:center; padding:40px;">
+                ❌ Error al cargar los datos:<br>
+                <small>${error.message}</small><br><br>
+                Prueba en modo incógnito o desactiva el bloqueador de anuncios.
+            </p>`;
     }
 }
 
-// Renderizar tarjetas
+// Renderizar tarjetas (el resto es igual)
 function renderCountries(countries) {
     grid.innerHTML = '';
     if (countries.length === 0) {
         grid.innerHTML = `<p style="grid-column:1/-1; text-align:center; padding:40px;">No se encontraron países</p>`;
         return;
     }
-    
     countries.forEach(country => {
         const card = document.createElement('div');
         card.className = 'country-card';
@@ -76,8 +80,7 @@ function renderCountries(countries) {
     });
 }
 
-// Mostrar detalle (el resto del código es idéntico al original)
-function showDetail(country) {
+function showDetail(country) { /* ... mismo código de antes ... */ 
     currentDetail = country;
     grid.style.display = 'none';
     detailView.style.display = 'block';
@@ -129,17 +132,9 @@ backBtn.addEventListener('click', () => {
 function filterCountries() {
     const searchTerm = searchInput.value.toLowerCase().trim();
     const selectedRegion = regionFilter.value;
-    
     let filtered = allCountries;
-    
-    if (searchTerm) {
-        filtered = filtered.filter(c => c.name.common.toLowerCase().includes(searchTerm));
-    }
-    
-    if (selectedRegion) {
-        filtered = filtered.filter(c => c.region === selectedRegion);
-    }
-    
+    if (searchTerm) filtered = filtered.filter(c => c.name.common.toLowerCase().includes(searchTerm));
+    if (selectedRegion) filtered = filtered.filter(c => c.region === selectedRegion);
     renderCountries(filtered);
 }
 
