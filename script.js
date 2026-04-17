@@ -2,6 +2,44 @@
 let allCountries = [];
 let currentDetail = null;
 
+// Traducción de regiones al español
+const regionesES = {
+    'Africa': 'África',
+    'Americas': 'América',
+    'Asia': 'Asia',
+    'Europe': 'Europa',
+    'Oceania': 'Oceanía',
+    'Antarctic': 'Antártida',
+    'Polar': 'Polar'
+};
+
+// Traducción de subregiones al español
+const subregionesES = {
+    'Southern Asia': 'Asia del Sur',
+    'Northern Europe': 'Europa del Norte',
+    'Southern Europe': 'Europa del Sur',
+    'Northern Africa': 'África del Norte',
+    'Western Africa': 'África Occidental',
+    'Eastern Africa': 'África Oriental',
+    'Middle Africa': 'África Central',
+    'Southern Africa': 'África del Sur',
+    'South America': 'América del Sur',
+    'North America': 'América del Norte',
+    'Central America': 'América Central',
+    'Caribbean': 'Caribe',
+    'Eastern Asia': 'Asia Oriental',
+    'South-Eastern Asia': 'Asia del Sureste',
+    'Western Asia': 'Asia Occidental',
+    'Central Asia': 'Asia Central',
+    'Eastern Europe': 'Europa del Este',
+    'Western Europe': 'Europa Occidental',
+    'Southern Asia': 'Asia del Sur',
+    'Melanesia': 'Melanesia',
+    'Micronesia': 'Micronesia',
+    'Polynesia': 'Polinesia',
+    'Australia and New Zealand': 'Australia y Nueva Zelanda'
+};
+
 // Elementos DOM
 const grid = document.getElementById('countries-grid');
 const searchInput = document.getElementById('search-input');
@@ -12,15 +50,20 @@ const backBtn = document.getElementById('back-btn');
 const themeBtn = document.getElementById('theme-toggle');
 const themeIcon = document.getElementById('theme-icon');
 
+// Obtener nombre en español del país
+function getNombreES(country) {
+    return (country.translations && country.translations.es) 
+        ? country.translations.es 
+        : country.name;
+}
+
 // Cargar tema guardado
 function loadTheme() {
     if (localStorage.getItem('theme') === 'dark') {
         document.documentElement.classList.add('dark');
-        themeIcon.textContent = '☀️';
-        themeBtn.innerHTML = `<span id="theme-icon">☀️</span> Light Mode`;
+        themeBtn.innerHTML = `<span id="theme-icon">☀️</span> Modo Claro`;
     } else {
-        themeIcon.textContent = '🌙';
-        themeBtn.innerHTML = `<span id="theme-icon">🌙</span> Dark Mode`;
+        themeBtn.innerHTML = `<span id="theme-icon">🌙</span> Modo Oscuro`;
     }
 }
 
@@ -31,15 +74,13 @@ themeBtn.addEventListener('click', () => {
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
     
     if (isDark) {
-        themeIcon.textContent = '☀️';
-        themeBtn.innerHTML = `<span id="theme-icon">☀️</span> Light Mode`;
+        themeBtn.innerHTML = `<span id="theme-icon">☀️</span> Modo Claro`;
     } else {
-        themeIcon.textContent = '🌙';
-        themeBtn.innerHTML = `<span id="theme-icon">🌙</span> Dark Mode`;
+        themeBtn.innerHTML = `<span id="theme-icon">🌙</span> Modo Oscuro`;
     }
 });
 
-// Cargar datos desde data.json (local y siempre funciona)
+// Cargar datos desde data.json
 async function fetchCountries() {
     try {
         const res = await fetch('data.json');
@@ -55,19 +96,22 @@ async function fetchCountries() {
 function renderCountries(countries) {
     grid.innerHTML = '';
     if (countries.length === 0) {
-        grid.innerHTML = `<p style="grid-column:1/-1; text-align:center; padding:40px;">No se encontraron países</p>`;
+        grid.innerHTML = `<p style="grid-column:1/-1; text-align:center; padding:40px;">No se encontraron países.</p>`;
         return;
     }
     
     countries.forEach(country => {
+        const nombreES = getNombreES(country);
+        const regionES = regionesES[country.region] || country.region;
+
         const card = document.createElement('div');
         card.className = 'country-card';
         card.innerHTML = `
-            <img src="${country.flags.png}" alt="${country.name}">
+            <img src="${country.flags.png}" alt="Bandera de ${nombreES}">
             <div class="country-info">
-                <h3>${country.name}</h3>
-                <p><strong>Population:</strong> ${country.population.toLocaleString('es-ES')}</p>
-                <p><strong>Region:</strong> ${country.region}</p>
+                <h3>${nombreES}</h3>
+                <p><strong>Población:</strong> ${country.population.toLocaleString('es-ES')}</p>
+                <p><strong>Región:</strong> ${regionES}</p>
                 <p><strong>Capital:</strong> ${country.capital || 'N/A'}</p>
             </div>
         `;
@@ -76,41 +120,45 @@ function renderCountries(countries) {
     });
 }
 
-// Mostrar detalle (adaptado a formato v2 de data.json)
+// Mostrar detalle
 function showDetail(country) {
     currentDetail = country;
     grid.style.display = 'none';
     detailView.style.display = 'block';
     
-    const languages = country.languages.map(l => l.name).join(', ');
-    const currencies = country.currencies.map(c => c.name).join(', ');
+    const nombreES = getNombreES(country);
+    const regionES = regionesES[country.region] || country.region;
+    const subregionES = subregionesES[country.subregion] || country.subregion || 'N/A';
+
+    const idiomas = country.languages.map(l => l.name).join(', ');
+    const monedas = country.currencies.map(c => c.name).join(', ');
     
-    let bordersHTML = '<p><strong>Border Countries:</strong> ';
+    let borderHTML = '<div class="border-countries"><strong>Países Fronterizos:</strong> ';
     if (country.borders && country.borders.length > 0) {
-        bordersHTML += country.borders.map(code => {
+        borderHTML += country.borders.map(code => {
             const borderCountry = allCountries.find(c => c.alpha3Code === code);
-            return borderCountry 
-                ? `<button onclick="showBorder('${code}')">${borderCountry.name}</button>` 
-                : '';
-        }).join('');
+            if (!borderCountry) return '';
+            const borderNombreES = getNombreES(borderCountry);
+            return `<button onclick="showBorder('${code}')">${borderNombreES}</button>`;
+        }).filter(Boolean).join('');
     } else {
-        bordersHTML += 'None';
+        borderHTML += 'Ninguno';
     }
-    bordersHTML += '</p>';
+    borderHTML += '</div>';
     
     detailContent.innerHTML = `
-        <img src="${country.flags.png}" alt="${country.name}">
+        <img src="${country.flags.png}" alt="Bandera de ${nombreES}">
         <div class="detail-info">
-            <h2>${country.name}</h2>
-            <div class="detail-row"><strong>Native Name:</strong> ${country.nativeName || country.name}</div>
-            <div class="detail-row"><strong>Population:</strong> ${country.population.toLocaleString('es-ES')}</div>
-            <div class="detail-row"><strong>Region:</strong> ${country.region}</div>
-            <div class="detail-row"><strong>Sub Region:</strong> ${country.subregion || 'N/A'}</div>
+            <h2>${nombreES}</h2>
+            <div class="detail-row"><strong>Nombre Nativo:</strong> ${country.nativeName || nombreES}</div>
+            <div class="detail-row"><strong>Población:</strong> ${country.population.toLocaleString('es-ES')}</div>
+            <div class="detail-row"><strong>Región:</strong> ${regionES}</div>
+            <div class="detail-row"><strong>Subregión:</strong> ${subregionES}</div>
             <div class="detail-row"><strong>Capital:</strong> ${country.capital || 'N/A'}</div>
-            <div class="detail-row"><strong>Top Level Domain:</strong> ${country.topLevelDomain ? country.topLevelDomain[0] : 'N/A'}</div>
-            <div class="detail-row"><strong>Currencies:</strong> ${currencies}</div>
-            <div class="detail-row"><strong>Languages:</strong> ${languages}</div>
-            <div class="border-countries">${bordersHTML}</div>
+            <div class="detail-row"><strong>Dominio de nivel superior:</strong> ${country.topLevelDomain ? country.topLevelDomain[0] : 'N/A'}</div>
+            <div class="detail-row"><strong>Monedas:</strong> ${monedas}</div>
+            <div class="detail-row"><strong>Idiomas:</strong> ${idiomas}</div>
+            ${borderHTML}
         </div>
     `;
 }
@@ -123,7 +171,7 @@ window.showBorder = function(code) {
 backBtn.addEventListener('click', () => {
     detailView.style.display = 'none';
     grid.style.display = 'grid';
-    renderCountries(allCountries);
+    filterCountries();
 });
 
 function filterCountries() {
@@ -133,7 +181,10 @@ function filterCountries() {
     let filtered = allCountries;
     
     if (searchTerm) {
-        filtered = filtered.filter(c => c.name.toLowerCase().includes(searchTerm));
+        filtered = filtered.filter(c => {
+            const nombreES = getNombreES(c).toLowerCase();
+            return nombreES.includes(searchTerm) || c.name.toLowerCase().includes(searchTerm);
+        });
     }
     
     if (selectedRegion) {
@@ -145,10 +196,6 @@ function filterCountries() {
 
 searchInput.addEventListener('input', filterCountries);
 regionFilter.addEventListener('change', filterCountries);
-
-// Inicializar
-loadTheme();
-fetchCountries();
 
 // Inicializar
 loadTheme();
