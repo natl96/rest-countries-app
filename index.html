@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Where in the world?</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Where in the world?</h1>
+            <button id="theme-toggle" class="theme-btn">
+                <span id="theme-icon">🌙</span> Dark Mode
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Controles -->
+        <div class="controls">
+            <input type="text" id="search-input" placeholder="Buscar país..." class="search-input">
+            
+            <select id="region-filter" class="region-select">
+                <option value="">Filter by Region</option>
+                <option value="Africa">Africa</option>
+                <option value="Americas">Americas</option>
+                <option value="Asia">Asia</option>
+                <option value="Europe">Europe</option>
+                <option value="Oceania">Oceania</option>
+            </select>
+        </div>
+
+        <!-- Grid de países -->
+        <div id="countries-grid" class="countries-grid"></div>
+
+        <!-- Vista de detalle -->
+        <div id="detail-view" class="detail-view" style="display: none;">
+            <button id="back-btn" class="back-btn">← Back</button>
+            <div class="detail-content" id="detail-content"></div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
